@@ -181,21 +181,28 @@ function toStreamErrorMessage(error: unknown): string {
     return "";
   }
 
-  let detail = "予期しないエラーが発生しました。";
-  if (error instanceof Anthropic.APIError) {
-    switch (error.status) {
-      case 401:
-        detail =
-          "APIキーが無効です。設定（⚙️）で入力したキーを確認してください。";
-        break;
-      case 429:
-        detail = "リクエストが集中しています。しばらく待って再試行してください。";
-        break;
-      case 529:
-        detail = "AIサービスが一時的に過負荷です。時間をおいて再試行してください。";
-        break;
-      default:
-        detail = "AIサービスとの通信でエラーが発生しました。";
+  // サーバ側でも原因を追えるようにログを残す。
+  console.error("[/api/review] ストリーム中にエラーが発生しました:", error);
+
+  let detail = "予期しないエラーが発生しました。時間をおいて再試行してください。";
+  if (error instanceof Anthropic.APIConnectionError) {
+    // ネットワーク到達不可（オフライン・DNS・プロキシ等）。
+    detail =
+      "AIサービスに接続できませんでした。ネットワーク接続を確認して再試行してください。";
+  } else if (error instanceof Anthropic.APIError) {
+    const status = error.status;
+    if (status === 400 || status === 401 || status === 403) {
+      // 認証・リクエスト拒否はキー不正が主因のため、設定を促す。
+      detail =
+        "APIキーが無効か拒否されました。設定（⚙️）で入力したキーを確認してください。";
+    } else if (status === 429) {
+      detail = "リクエストが集中しています。しばらく待って再試行してください。";
+    } else if (status === 529) {
+      detail = "AIサービスが一時的に過負荷です。時間をおいて再試行してください。";
+    } else if (typeof status === "number" && status >= 500) {
+      detail = "AIサービス側でエラーが発生しました。時間をおいて再試行してください。";
+    } else {
+      detail = "AIサービスとの通信でエラーが発生しました。";
     }
   }
 
