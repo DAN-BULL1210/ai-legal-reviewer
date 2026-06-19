@@ -16,7 +16,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AI Legal Reviewer | 契約書リスク自動レビュー",
+  title: "LegaBull Sniffer | 契約書リスク自動レビュー",
   description:
     "契約書の条文からリスクをAIが自動検知し、危険度スコアと改善案を提示する法務レビュー支援ツール。",
 };

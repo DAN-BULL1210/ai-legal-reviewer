@@ -6,10 +6,11 @@
  * 状態管理は useLegalReview フックに集約する。
  */
 
-import { AlertCircle, KeyRound, Loader2, ScrollText, Sparkles } from "lucide-react";
+import { AlertCircle, KeyRound, Loader2, ScrollText } from "lucide-react";
 import { useState } from "react";
 
 import { ApiKeySettings } from "@/components/ApiKeySettings";
+import { BrandLogo } from "@/components/BrandLogo";
 import { ReviewForm } from "@/components/ReviewForm";
 import { ReviewReport } from "@/components/ReviewReport";
 import { RiskDashboard } from "@/components/RiskDashboard";
@@ -37,30 +38,27 @@ export default function Home() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <header className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-indigo-600">
-            <Sparkles className="h-5 w-5" aria-hidden />
-            <span className="text-sm font-semibold tracking-wide">
-              AI Legal Reviewer
-            </span>
+      <header className="mb-8 rounded-2xl bg-neutral-900 px-6 py-6 text-white shadow-sm ring-1 ring-black/5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <BrandLogo />
+            <h1 className="mt-4 text-2xl font-bold sm:text-3xl">
+              契約書リスク自動レビュー
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-400">
+              契約書の条文を貼り付けると、AIが条項ごとのリスクを検知し、危険度スコアと
+              具体的な改善案を提示します。
+            </p>
           </div>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">
-            契約書リスク自動レビュー
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
-            契約書の条文を貼り付けると、AIが条項ごとのリスクを検知し、危険度スコアと
-            具体的な改善案を提示します。
-          </p>
-        </div>
-        <div className="shrink-0">
-          <ApiKeySettings
-            apiKey={apiKey}
-            onSave={saveApiKey}
-            onClear={clearApiKey}
-            open={settingsOpen}
-            onOpenChange={setSettingsOpen}
-          />
+          <div className="shrink-0">
+            <ApiKeySettings
+              apiKey={apiKey}
+              onSave={saveApiKey}
+              onClear={clearApiKey}
+              open={settingsOpen}
+              onOpenChange={setSettingsOpen}
+            />
+          </div>
         </div>
       </header>
 
