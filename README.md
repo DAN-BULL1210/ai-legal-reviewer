@@ -56,18 +56,27 @@ src/
 
 クライアントはマーカーで分割し、`@@SUMMARY@@`〜`@@REPORT@@` 間の JSON を `try/catch` と型ガードで安全にパースしてダッシュボードへ、`@@REPORT@@` 以降を react-markdown でストリーミング表示します。JSON が破損していても UI はクラッシュしません。
 
+## APIキーの扱い（BYO-key）
+
+本アプリは利用者が **自分の Anthropic APIキーを画面右上の設定（⚙️）から入力** して使う方式です。
+
+- キーは **ブラウザのローカル（localStorage）にのみ保存** され、レビュー実行時に `x-api-key` ヘッダー経由でサーバー（Route Handler）へ渡されます。
+- サーバー側にキーは保存しません。`.env.local` への設定は **任意**（共通鍵で運用したい場合のフォールバック）です。
+- サーバーは `x-api-key` ヘッダーを最優先し、無ければ環境変数 `ANTHROPIC_API_KEY` を使用します。
+
 ## セットアップ
 
 ```bash
 # 1. 依存関係のインストール
 npm install
 
-# 2. 環境変数の設定（.env.example を .env.local にコピーしてキーを設定）
-cp .env.example .env.local   # PowerShell: Copy-Item .env.example .env.local
-
-# 3. 開発サーバー起動
+# 2. 開発サーバー起動
 npm run dev                  # http://localhost:3000
+
+# 3. ブラウザで開き、右上の設定（⚙️）から APIキーを入力
 ```
+
+> 共通鍵で運用する場合のみ、`.env.example` を `.env.local` にコピーしてキーを設定します（PowerShell: `Copy-Item .env.example .env.local`）。
 
 ## 主要コマンド
 
