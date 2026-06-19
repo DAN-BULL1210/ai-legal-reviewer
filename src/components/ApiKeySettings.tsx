@@ -84,7 +84,7 @@ export function ApiKeySettings({
         <span className="hidden sm:inline">APIキー設定</span>
         <span
           className={`h-2 w-2 rounded-full ${
-            hasKey ? "bg-emerald-500" : "bg-slate-300"
+            hasKey ? "bg-neutral-900" : "bg-slate-300"
           }`}
           aria-hidden
         />
