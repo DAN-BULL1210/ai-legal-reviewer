@@ -36,7 +36,7 @@ export default function Home() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <header className="mb-8 flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-indigo-600">
