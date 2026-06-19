@@ -1,40 +1,47 @@
 /**
  * Anthropic クライアントの生成。
  *
- * APIキーは環境変数 `ANTHROPIC_API_KEY` から読み込む。
- * 未設定のまま起動してもアプリ全体がクラッシュしないよう、
- * クライアント生成は遅延（リクエスト時）に行い、専用エラーで通知する。
+ * APIキーは「リクエストの x-api-key ヘッダー（利用者が画面から入力した鍵）」を最優先で使用し、
+ * 無ければサーバの環境変数 `ANTHROPIC_API_KEY` にフォールバックする。
+ * これにより、利用者が自分の鍵を持ち込む（BYO-key）デモ運用と、
+ * サーバ共通鍵での運用の両方に対応する。
  */
 
 import Anthropic from "@anthropic-ai/sdk";
 
-/** APIキー未設定など、設定不備を表す専用エラー。route 側で 500 に変換する。 */
+/** APIキー未指定を表す専用エラー。route 側で適切なステータスに変換する。 */
 export class MissingApiKeyError extends Error {
   readonly code = "missing_api_key";
   constructor() {
     super(
-      "サーバーに ANTHROPIC_API_KEY が設定されていません。環境変数を確認してください。",
+      "APIキーが設定されていません。画面右上の設定（⚙️）からAnthropicのAPIキーを入力してください。",
     );
     this.name = "MissingApiKeyError";
   }
 }
 
-let cachedClient: Anthropic | null = null;
+/**
+ * リクエストヘッダー（優先）または環境変数から APIキーを解決する。
+ * @throws {MissingApiKeyError} どちらにもキーが無い場合
+ */
+export function resolveApiKey(request: Request): string {
+  const headerKey = request.headers.get("x-api-key")?.trim();
+  if (headerKey) {
+    return headerKey;
+  }
+
+  const envKey = process.env.ANTHROPIC_API_KEY?.trim();
+  if (envKey) {
+    return envKey;
+  }
+
+  throw new MissingApiKeyError();
+}
 
 /**
- * Anthropic クライアントを取得する（生成結果をキャッシュ）。
- * @throws {MissingApiKeyError} APIキーが未設定の場合
+ * 指定したAPIキーで Anthropic クライアントを生成する。
+ * キーはリクエストごとに異なり得るため、シングルトンにはしない。
  */
-export function getAnthropicClient(): Anthropic {
-  if (cachedClient) {
-    return cachedClient;
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new MissingApiKeyError();
-  }
-
-  cachedClient = new Anthropic({ apiKey });
-  return cachedClient;
+export function createAnthropicClient(apiKey: string): Anthropic {
+  return new Anthropic({ apiKey });
 }
