@@ -13,9 +13,9 @@ export const MAX_TOKENS = 4096;
 
 /**
  * フッターの「応援する」ボタンのリンク先。
- * ご自身の支援ページURL（Buy Me a Coffee / GitHub Sponsors 等）に置き換えてください。
+ * ご自身の支援ページURL（OFUSE / Buy Me a Coffee / GitHub Sponsors 等）に置き換えてください。
  */
-export const SUPPORT_URL = "https://www.buymeacoffee.com/";
+export const SUPPORT_URL = "https://ofuse.me/f0eed846";
 
 /** 入力契約書テキストの最大文字数（過大なリクエストによるコスト・遅延を防ぐ）。 */
 export const MAX_CONTRACT_LENGTH = 20000;
