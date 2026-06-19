@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Legal Reviewer（契約書リスク自動レビュー）
 
-## Getting Started
+契約書や規約のテキストから **リスクを自動検知** し、危険度スコアと条項別の改善案を提示する AI 法務レビュー支援ツールです。レビューの長文は **ストリーミング表示**、ダッシュボードの数値は **フロントで安全にパース** する構成になっています。
 
-First, run the development server:
+## 主な機能
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **契約書テキスト＋契約種別**（NDA・業務委託・利用規約 など）の入力
+- **危険度スコア・リスクレベル・条項別リスク**のダッシュボード表示
+- **条項別のリスク解説と改善案（修正文例）** を Markdown でストリーミング表示
+- 入力検証／APIエラー分類／キャンセルに対応した堅牢なエラーハンドリング
+
+## 技術スタック
+
+| 分類 | 採用技術 |
+| --- | --- |
+| フレームワーク | Next.js 14（App Router） / TypeScript |
+| スタイリング | Tailwind CSS / @tailwindcss/typography |
+| Markdown | react-markdown + remark-gfm |
+| AI | Anthropic SDK（`@anthropic-ai/sdk`）, モデル `claude-sonnet-4-6` |
+| アイコン | lucide-react |
+
+## アーキテクチャ
+
+```
+src/
+├── app/
+│   ├── api/review/route.ts   # ストリーミングAPI（client.messages.stream）
+│   ├── layout.tsx            # ルートレイアウト / メタデータ
+│   └── page.tsx              # トップページ（2カラム構成）
+├── components/
+│   ├── ReviewForm.tsx        # 入力フォーム（文字数検証・実行/停止）
+│   ├── RiskDashboard.tsx     # スコアゲージ・条項別リスク一覧
+│   └── ReviewReport.tsx      # Markdownストリーミング表示
+├── hooks/
+│   └── useLegalReview.ts     # fetchストリーム受信・状態管理
+└── lib/
+    ├── anthropic.ts          # クライアント生成（遅延初期化）
+    ├── constants.ts          # モデルID・契約種別・ストリームマーカー
+    ├── parseRiskSummary.ts   # サマリーJSONの安全パース
+    ├── prompt.ts             # システム/ユーザープロンプト生成
+    ├── severity.ts           # 深刻度の配色・ラベル
+    └── types.ts              # ドメイン型定義
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### ストリーミング・プロトコル
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+単一のストリームで「ダッシュボード用の数値」と「長文レビュー」を両立させるため、モデルには次の形式で出力させます。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+@@SUMMARY@@
+{ "overallScore": 72, "riskLevel": "high", "headline": "...", "clauses": [...] }
+@@REPORT@@
+## 総評
+...（Markdown の詳細レビュー）...
+```
 
-## Learn More
+クライアントはマーカーで分割し、`@@SUMMARY@@`〜`@@REPORT@@` 間の JSON を `try/catch` と型ガードで安全にパースしてダッシュボードへ、`@@REPORT@@` 以降を react-markdown でストリーミング表示します。JSON が破損していても UI はクラッシュしません。
 
-To learn more about Next.js, take a look at the following resources:
+## APIキーの扱い（BYO-key）
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+本アプリは利用者が **自分の Anthropic APIキーを画面右上の設定（⚙️）から入力** して使う方式です。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- キーは **ブラウザのローカル（localStorage）にのみ保存** され、レビュー実行時に `x-api-key` ヘッダー経由でサーバー（Route Handler）へ渡されます。
+- サーバー側にキーは保存しません。`.env.local` への設定は **任意**（共通鍵で運用したい場合のフォールバック）です。
+- サーバーは `x-api-key` ヘッダーを最優先し、無ければ環境変数 `ANTHROPIC_API_KEY` を使用します。
 
-## Deploy on Vercel
+## セットアップ
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# 1. 依存関係のインストール
+npm install
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 2. 開発サーバー起動
+npm run dev                  # http://localhost:3000
+
+# 3. ブラウザで開き、右上の設定（⚙️）から APIキーを入力
+```
+
+> 共通鍵で運用する場合のみ、`.env.example` を `.env.local` にコピーしてキーを設定します（PowerShell: `Copy-Item .env.example .env.local`）。
+
+## 主要コマンド
+
+| コマンド | 説明 |
+| --- | --- |
+| `npm run dev` | 開発サーバー起動 |
+| `npm run build` | 本番ビルド確認（型・ビルドエラーの検査） |
+| `npm run lint` | 静的解析（型・構文チェック） |
+
+> ⚠️ 本ツールの出力は AI による参考情報であり、法的助言ではありません。重要な判断は必ず専門家にご相談ください。
