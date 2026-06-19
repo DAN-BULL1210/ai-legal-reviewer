@@ -2,7 +2,7 @@
 
 /**
  * トップページ。
- * 左に入力フォーム、右にダッシュボード＋詳細レビューを配置する2カラム構成。
+ * 左に入力フォーム、右にリスク検知結果（タブ切替）を配置する2カラム構成。
  * 状態管理は useLegalReview フックに集約する。
  */
 
@@ -11,9 +11,8 @@ import { useState } from "react";
 
 import { ApiKeySettings } from "@/components/ApiKeySettings";
 import { BrandLogo } from "@/components/BrandLogo";
+import { ResultTabs } from "@/components/ResultTabs";
 import { ReviewForm } from "@/components/ReviewForm";
-import { ReviewReport } from "@/components/ReviewReport";
-import { RiskDashboard } from "@/components/RiskDashboard";
 import { useApiKey } from "@/hooks/useApiKey";
 import { useLegalReview } from "@/hooks/useLegalReview";
 import type { ReviewRequest } from "@/lib/types";
@@ -116,9 +115,12 @@ export default function Home() {
             </div>
           )}
 
-          {summary && <RiskDashboard summary={summary} />}
-          {report.length > 0 && (
-            <ReviewReport report={report} streaming={status === "streaming"} />
+          {hasResult && (
+            <ResultTabs
+              summary={summary}
+              report={report}
+              streaming={status === "streaming"}
+            />
           )}
         </div>
       </div>
