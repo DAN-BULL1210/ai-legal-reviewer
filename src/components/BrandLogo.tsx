@@ -27,13 +27,13 @@ export function BrandLogo({ className = "" }: BrandLogoProps) {
         </span>
       ) : (
         <Image
-          src="/danbull-icon_2.jpg"
+          src="/danbull-icon.png"
           alt="LegaBull Sniffer ロゴ"
           width={48}
           height={48}
           priority
           onError={() => setImageFailed(true)}
-          className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-white/20"
+          className="h-12 w-12 shrink-0 rounded-full bg-black object-contain object-center ring-1 ring-white/20"
         />
       )}
       <span className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
