@@ -29,8 +29,8 @@ export interface UseLegalReview {
   report: string;
   /** エラーメッセージ（status === "error" のとき） */
   error: string | null;
-  /** レビューを開始する */
-  start: (request: ReviewRequest) => Promise<void>;
+  /** レビューを開始する（apiKey は x-api-key ヘッダーで送信） */
+  start: (request: ReviewRequest, apiKey: string) => Promise<void>;
   /** 進行中のレビューをキャンセルする */
   cancel: () => void;
   /** 状態を初期化する */
@@ -59,7 +59,16 @@ export function useLegalReview(): UseLegalReview {
   }, [cancel]);
 
   const start = useCallback(
-    async (request: ReviewRequest) => {
+    async (request: ReviewRequest, apiKey: string) => {
+      // APIキー未設定なら通信せず即エラー（設定を促す）。
+      if (!apiKey.trim()) {
+        setStatus("error");
+        setError(
+          "APIキーが設定されていません。画面右上の設定（⚙️）から入力してください。",
+        );
+        return;
+      }
+
       // 進行中のリクエストがあれば中断してから開始。
       cancel();
       const controller = new AbortController();
@@ -73,7 +82,10 @@ export function useLegalReview(): UseLegalReview {
       try {
         const response = await fetch("/api/review", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey.trim(),
+          },
           body: JSON.stringify(request),
           signal: controller.signal,
         });
