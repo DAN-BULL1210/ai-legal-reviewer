@@ -14,7 +14,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
-import { getAnthropicClient, MissingApiKeyError } from "@/lib/anthropic";
+import {
+  createAnthropicClient,
+  MissingApiKeyError,
+  resolveApiKey,
+} from "@/lib/anthropic";
 import {
   MAX_CONTRACT_LENGTH,
   MAX_TOKENS,
@@ -107,13 +111,15 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  // 2) クライアントの取得（APIキー未設定なら500）
+  // 2) APIキーの解決（ヘッダー優先・環境変数フォールバック）とクライアント生成。
+  //    キーが無いのは利用者側の設定不足のため 400 を返す。
   let client: Anthropic;
   try {
-    client = getAnthropicClient();
+    const apiKey = resolveApiKey(request);
+    client = createAnthropicClient(apiKey);
   } catch (error) {
     if (error instanceof MissingApiKeyError) {
-      return errorResponse(500, { error: error.message, code: error.code });
+      return errorResponse(400, { error: error.message, code: error.code });
     }
     return errorResponse(500, {
       error: "サーバー設定エラーが発生しました。",
@@ -179,7 +185,8 @@ function toStreamErrorMessage(error: unknown): string {
   if (error instanceof Anthropic.APIError) {
     switch (error.status) {
       case 401:
-        detail = "APIキーが無効です。サーバー設定を確認してください。";
+        detail =
+          "APIキーが無効です。設定（⚙️）で入力したキーを確認してください。";
         break;
       case 429:
         detail = "リクエストが集中しています。しばらく待って再試行してください。";
